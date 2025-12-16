@@ -38,7 +38,7 @@ All required demo workflows are located in: /workflows/ folder
 
 ---
 
-### AKXZAxisPlot
+### AK XZ Axis Plot
 
 The **main visualization node** that creates the final "plot".
 
@@ -90,7 +90,7 @@ Outputs and usage are identical, just with float values.
 
 ---
 
-### AKXZBatchPrompts
+### AK XZ Batch Prompts
 
 A node for **prompt testing**.
 
@@ -123,7 +123,7 @@ Both must be connected to the corresponding inputs of the KSampler.
 
 ---
 
-### AKXZBatchLoras
+### AK XZ Batch Loras
 
 Allows testing of **multiple LoRAs**.
 
