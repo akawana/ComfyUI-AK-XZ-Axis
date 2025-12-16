@@ -49,7 +49,7 @@ class AKXZRangeFloat:
             "required": {
                 "type": (["Cfg", "Denoise"], {"default": "Cfg"}),
                 "start": ("FLOAT", {"default": 0.0, "min": 0.0, "step": 0.05}),
-                "end": ("FLOAT", {"default": 0.0, "min": 0.0, "step": 0.05}),
+                "end": ("FLOAT", {"default": 0.05, "min": 0.05, "step": 0.05}),
                 "steps": ("INT", {"default": 1, "min": 1, "step": 1}),
             },
             "optional": {

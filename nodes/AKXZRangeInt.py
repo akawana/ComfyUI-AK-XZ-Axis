@@ -43,7 +43,7 @@ class AKXZRangeInt:
             "required": {
                 "type": (["Seed", "Step"], {"default": "Seed"}),
                 "start": ("INT", {"default": 0, "min": 0, "step": 1}),
-                "end": ("INT", {"default": 0, "min": 1, "step": 1}),
+                "end": ("INT", {"default": 1, "min": 1, "step": 1}),
                 "steps": ("INT", {"default": 0, "min": 1, "step": 1}),
                 "steps_define_end": ("BOOLEAN", {"default": False}),
             },
