@@ -59,6 +59,8 @@ If **only one image** is received, the node does **nothing**:
 
 This is intentional and allows you to **disable XZ testing instantly** without removing the node from your workflow.
 
+<img src="preview_cfg_seed.jpg" />
+
 ---
 
 ### AK XZ Range Int
@@ -152,6 +154,8 @@ Just connect your negative conditioning **directly to the KSampler**.
 Both must be connected to the corresponding KSampler inputs.
 
 - **xz_config** — connect to `AKXZAxisPlot` or another XZ node to enable Z-direction testing
+
+<img src="preview_loras.jpg" />
 
 ---
 
