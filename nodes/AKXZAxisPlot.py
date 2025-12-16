@@ -236,7 +236,7 @@ class AKXZAxisPlot:
             "required": {
                 "image": ("IMAGE",),
                 "xz_config": ("STRING", {"forceInput": True}),
-                "header_height_percent": ("INT", {"default": 5, "min": 5, "max": 50, "step": 1}),
+                "header_height_percent": ("INT", {"default": 25, "min": 5, "max": 50, "step": 1}),
                 "grid_spacing": ("INT", {"default": 0, "min": 0, "step": 1}),
                 "sting_trim": ("INT", {"default": 30, "min": 30, "step": 1}),
                 "plot_type": (["plot", "separate"], {"default": "plot"}),
