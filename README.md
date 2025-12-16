@@ -22,8 +22,7 @@ The main advantage of this pack is that it **does not require a custom KSampler*
 
 When working with a standard KSampler, you cannot build a true two-dimensional **XY grid** in the classical sense.
 
-In practice, you can only iterate along one axis (X), and optionally inject a second varying parameter inside that iteration.  
-Honestly, I’m not even sure who really needs a full XY grid and in what scenario — but technically, this limitation exists.
+In practice, you can only iterate along one axis (X), and optionally inject a second varying parameter inside that iteration. Honestly, I’m not even sure who really needs a full XY grid and in what scenario — but technically, this limitation exists.
 
 That second parameter is what I call **Z**.
 
