@@ -177,7 +177,7 @@ You can install this extension in two ways:
 ### 1. Through ComfyUI Manager (recommended)
 
 Open **ComfyUI Manager → Install**,  
-then simply search for **Folded prompts** in the search bar.  
+then simply search for **AK XZ** in the search bar.  
 Select the extension and click **Install**.
 
 ### 2. Manual installation
