@@ -120,12 +120,14 @@ class AKXZRangeInt:
             for i in range(len(images_list)):
                 v = outputRange[i] if i < len(outputRange) else outputRange[-1]
                 images_list[i]["z_text"] = f"{type}: {v}"
+                images_list[i]["z_parameter_name_0"] = str(type).lower()
+                images_list[i]["z_parameter_value_0"] = v
 
             outputJson = json.dumps(cfg, ensure_ascii=False)
         else:
             images_out: List[Dict[str, Any]] = []
             for i in range(len(outputRange)):
-                images_out.append({"x_text": f"{type}: {outputRange[i]}"})
+                images_out.append({"x_text": f"{type}: {outputRange[i]}", "x_parameter_name_0": str(type).lower(), "x_parameter_value_0": outputRange[i]})
             cfg_out = {"image": images_out}
             outputJson = json.dumps(cfg_out, ensure_ascii=False)
 

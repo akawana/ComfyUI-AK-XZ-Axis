@@ -159,13 +159,17 @@ class AKXZBatchPrompts:
                 ptxt = pairs_pos[j] if pairs_pos else ""
                 ntxt = pairs_neg[j] if pairs_neg else ""
                 images[i]["z_text"] = f"Pos: {ptxt}" if ntxt == "" else f"Pos: {ptxt} || Neg: {ntxt}"
+                images[i]["z_parameter_name_0"] = "pos"
+                images[i]["z_parameter_value_0"] = ptxt
+                images[i]["z_parameter_name_1"] = "neg"
+                images[i]["z_parameter_value_1"] = ntxt
 
             output_json = json.dumps(cfg, ensure_ascii=False)
             return (positives, negatives, output_json)
 
         images_out: List[Dict[str, Any]] = []
         for i in range(real_steps):
-            images_out.append({"x_text": f"Pos: {pairs_pos[i]}" if pairs_neg[i] == "" else f"Pos: {pairs_pos[i]} || Neg: {pairs_neg[i]}"})
+            images_out.append({"x_text": f"Pos: {pairs_pos[i]}" if pairs_neg[i] == "" else f"Pos: {pairs_pos[i]} || Neg: {pairs_neg[i]}", "x_parameter_name_0": "pos", "x_parameter_value_0": pairs_pos[i], "x_parameter_name_1": "neg", "x_parameter_value_1": pairs_neg[i]})
         cfg_out = {"image": images_out}
         output_json = json.dumps(cfg_out, ensure_ascii=False)
         return (positives, negatives, output_json)
