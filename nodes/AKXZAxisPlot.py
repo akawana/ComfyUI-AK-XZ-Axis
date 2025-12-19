@@ -78,6 +78,61 @@ def _pil_to_image_tensor(pil_img: Image.Image) -> torch.Tensor:
     return torch.from_numpy(x)
 
 
+def setImageMeta(pil_img: Image.Image, meta: dict) -> Image.Image:
+    if pil_img is None:
+        return pil_img
+    if not isinstance(pil_img, Image.Image):
+        return pil_img
+    if not isinstance(meta, dict):
+        meta = {}
+
+    try:
+        meta_json = json.dumps(meta, ensure_ascii=False)
+    except Exception:
+        meta_json = "{}"
+
+    pil_img.info["ak_meta"] = meta_json
+    for k in ("seed", "steps", "cfg", "denoise", "lora", "pos", "neg"):
+        v = meta.get(k, "")
+        if v is None:
+            v = ""
+        pil_img.info[k] = str(v)
+
+    return pil_img
+
+
+def _meta_pick(cfg: Dict[str, Any], key: str) -> str:
+    k = (key or "").strip().lower()
+    if not k:
+        return ""
+    for axis in ("x", "z"):
+        for idx in (0, 1):
+            n = cfg.get(f"{axis}_parameter_name_{idx}", "")
+            if n is None:
+                n = ""
+            if str(n).strip().lower() == k:
+                v = cfg.get(f"{axis}_parameter_value_{idx}", "")
+                if v is None:
+                    return ""
+                return str(v)
+    return ""
+
+
+def _build_meta(cfg: Any) -> Dict[str, str]:
+    if not isinstance(cfg, dict):
+        return {"seed": "", "steps": "", "cfg": "", "denoise": "", "lora": "", "pos": "", "neg": ""}
+
+    return {
+        "seed": _meta_pick(cfg, "seed"),
+        "steps": _meta_pick(cfg, "steps"),
+        "cfg": _meta_pick(cfg, "cfg"),
+        "denoise": _meta_pick(cfg, "denoise"),
+        "lora": _meta_pick(cfg, "lora"),
+        "pos": _meta_pick(cfg, "pos"),
+        "neg": _meta_pick(cfg, "neg"),
+    }
+
+
 def _load_font(sz: int) -> ImageFont.ImageFont:
     sz = int(max(1, sz))
 
@@ -239,12 +294,13 @@ class AKXZAxisPlot:
                 "header_height_percent": ("INT", {"default": 25, "min": 5, "max": 50, "step": 1}),
                 "grid_spacing": ("INT", {"default": 0, "min": 0, "step": 1}),
                 "sting_trim": ("INT", {"default": 30, "min": 30, "step": 1}),
+                "draw_headers": ("BOOLEAN", {"default": True}),
                 "plot_type": (["plot", "separate"], {"default": "plot"}),
             }
         }
 
-    RETURN_TYPES = ("IMAGE",)
-    RETURN_NAMES = ("plot_image",)
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("plot_image", "xz_config")
     FUNCTION = "run"
     CATEGORY = "AK/XZ Axis"
 
@@ -255,7 +311,8 @@ class AKXZAxisPlot:
         header_height_percent,
         grid_spacing,
         sting_trim,
-        plot_type,
+        draw_headers,
+                plot_type,
     ):
         def _first(v, default=None):
             if isinstance(v, list) and v:
@@ -266,6 +323,9 @@ class AKXZAxisPlot:
         grid_spacing = int(_first(grid_spacing, 0))
         sting_trim = int(_first(sting_trim, 30))
         plot_type = str(_first(plot_type, "plot"))
+        draw_headers = bool(_first(draw_headers, True))
+
+        cfg_src = _first(xz_config, "")
 
         if image is None:
             raise ValueError("image is required")
@@ -296,15 +356,14 @@ class AKXZAxisPlot:
 
         batch = len(tensors)
         if batch == 1:
-            return (tensors[0].unsqueeze(0),)
+            return (tensors[0].unsqueeze(0), cfg_src)
         first_pil = _image_tensor_to_pil(tensors[0])
         w, h = first_pil.size
 
-        header_height = int(round(h * (float(header_height_percent) / 100.0)))
-        cfg_src = _first(xz_config, "")
+        header_height = int(round(h * (float(header_height_percent) / 100.0))) if draw_headers else 0
         cfg_list = _parse_xz_config(cfg_src)
-
         processed_pils: List[Image.Image] = []
+        meta_list: List[Dict[str, str]] = []
         header_layout = {}
         for i in range(batch):
             pil = _image_tensor_to_pil(tensors[i])
@@ -313,6 +372,8 @@ class AKXZAxisPlot:
 
             x_text = ""
             z_text = ""
+            meta = {"seed": "", "steps": "", "cfg": "", "denoise": "", "lora": "", "pos": "", "neg": ""}
+
             if i < len(cfg_list):
                 v = cfg_list[i]
                 if isinstance(v, dict):
@@ -320,8 +381,11 @@ class AKXZAxisPlot:
                     zv = v.get("z_text", "")
                     x_text = "" if xv is None else str(xv)
                     z_text = "" if zv is None else str(zv)
+                    meta = _build_meta(v)
 
-            processed_pils.append(_add_header_and_text(pil, header_height, x_text, z_text, sting_trim, header_layout))
+            pimg = _add_header_and_text(pil, header_height, x_text, z_text, sting_trim, header_layout)
+            processed_pils.append(pimg)
+            meta_list.append(meta)
 
         if str(plot_type).lower() == "plot":
             gs = int(max(0, grid_spacing))
@@ -333,10 +397,12 @@ class AKXZAxisPlot:
                 output_plot.paste(pimg, (x_off, 0))
 
             out_t = _pil_to_image_tensor(output_plot).unsqueeze(0)
-            return (out_t,)
+            return (out_t, cfg_src)
 
-        out_batch = torch.stack([_pil_to_image_tensor(pimg) for pimg in processed_pils], dim=0)
-        return (out_batch,)
+        out_batch = torch.stack([
+            _pil_to_image_tensor(pimg) for i, pimg in enumerate(processed_pils)
+        ], dim=0)
+        return (out_batch, cfg_src)
 
 
 NODE_CLASS_MAPPINGS = {

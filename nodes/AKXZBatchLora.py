@@ -97,11 +97,13 @@ class AKXZBatchLora:
                     cap = 0
                 j = i if i <= cap else cap
                 images[i]["z_text"] = f"Lora: {j}"
+                images[i]["z_parameter_name_0"] = "lora"
+                images[i]["z_parameter_value_0"] = j
 
             output_json = json.dumps(cfg, ensure_ascii=False)
             return (models, conds, output_json)
 
-        images_out: List[Dict[str, Any]] = [{"x_text": f"Lora: {i}"} for i in range(real_steps)]
+        images_out: List[Dict[str, Any]] = [{"x_text": f"Lora: {i}", "x_parameter_name_0": "lora", "x_parameter_value_0": i} for i in range(real_steps)]
         cfg_out = {"image": images_out}
         output_json = json.dumps(cfg_out, ensure_ascii=False)
         return (models, conds, output_json)
