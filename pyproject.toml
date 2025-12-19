@@ -1,0 +1,28 @@
+[project]
+name = "Comfyui-AK-XZ-Axis"
+publisher = "akawana2"
+version = "1.00"
+frontend_version = "1.00"
+description = "A set of nodes for XY-style testing of parameters such as seed, steps, cfg, denoise, prompts, and LoRAs. The advantage of this pack is that it does not require a custom KSampler."
+readme = "README.md"
+requires-python = ">=3.10"
+
+
+packages = ["nodes"]
+
+[project.urls]
+Repository = "https://github.com/akawana/ComfyUI-AK-XZ-Axis"
+Documentation = "https://github.com/akawana/ComfyUI-AK-XZ-Axis/wiki"
+"Bug Tracker" = "https://github.com/akawana/ComfyUI-AK-XZ-Axis/issues"
+
+[tool.comfy_node]
+package = "nodes"
+publisher = "akawana2"
+display_name = "Comfyui-AK-XZ-Axis"
+summary = "Nodes for XY-style testing: seed, steps, cfg, denoise, prompts, and LoRAs"
+tags = ["xy", "seed", "cfg", "denoise", "prompt", "lora"]
+
+[tool.comfy]
+PublisherId = "akawana2" # TODO (fill in Publisher ID from Comfy Registry Website).
+DisplayName = "Comfyui AK XZ Axis" # Display name for the Custom Node. Can be changed later.
+Icon = "https://raw.githubusercontent.com/akawana/ComfyUI-Utils-extra/refs/heads/main/icon.jpg"
