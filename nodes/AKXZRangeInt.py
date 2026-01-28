@@ -44,7 +44,7 @@ class AKXZRangeInt:
                 "type": (["Seed", "Step"], {"default": "Seed"}),
                 "start": ("INT", {"default": 0, "min": 0, "step": 1}),
                 "end": ("INT", {"default": 1, "min": 1, "step": 1}),
-                "steps": ("INT", {"default": 0, "min": 1, "step": 1}),
+                "xz_steps": ("INT", {"default": 0, "min": 1, "step": 1}),
                 "steps_define_end": ("BOOLEAN", {"default": False}),
             },
             "optional": {
@@ -64,7 +64,7 @@ class AKXZRangeInt:
         type: str,
         start: int,
         end: int,
-        steps: int,
+        xz_steps: int,
         steps_define_end: bool,
         xz_config: Any = None,
     ) -> Tuple[List[int], str]:
@@ -76,7 +76,7 @@ class AKXZRangeInt:
             images_list = _get_images_list(cfg) or []
 
         start_i = int(start)
-        s_i = int(steps)
+        s_i = int(xz_steps)
         if bool(steps_define_end):
             end_i = start_i + max(1, s_i) - 1
         else:
@@ -90,7 +90,7 @@ class AKXZRangeInt:
             desired = len(images_list) if images_list is not None else 0
             N = desired if desired > 0 else 1
         else:
-            s = int(steps)
+            s = int(xz_steps)
             N = max(1, s)
 
         outputRange: List[int] = []

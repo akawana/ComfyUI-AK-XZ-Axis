@@ -1,3 +1,74 @@
+
+# === AKXZ embedded JSON helpers (raw cfg dicts) ===
+import json as _akxz_json
+import struct as _akxz_struct
+import torch as _akxz_torch
+
+_AKXZ_MAGIC = b"AKXZ"  # 4 bytes
+_AKXZ_HEADER_LEN = 8   # magic + uint32_be(payload_len)
+
+def _akxz_bytes_to_float01(data: bytes) -> _akxz_torch.Tensor:
+    return _akxz_torch.tensor(list(data), dtype=_akxz_torch.float32) / 255.0
+
+def _akxz_float01_to_bytes(x: _akxz_torch.Tensor) -> bytes:
+    x = _akxz_torch.clamp(x * 255.0 + 0.5, 0, 255).to(_akxz_torch.uint8).cpu()
+    return bytes(x.numpy().tobytes())
+
+def akxz_embed_dicts_into_tensor(images: _akxz_torch.Tensor, dicts: list) -> _akxz_torch.Tensor:
+    """
+    images: [B,H,W,3] float32 0..1
+    dicts:  list of dicts length B (or 1) to embed, serialized 1:1 as JSON (no key renaming)
+    Embeds into row y=0, starting at x=0, RGB triplets.
+    """
+    if not isinstance(images, _akxz_torch.Tensor) or images.ndim != 4 or images.shape[-1] < 3:
+        raise ValueError("Expected IMAGE tensor [B,H,W,3].")
+    b, h, w, c = images.shape
+    if not isinstance(dicts, list) or len(dicts) == 0:
+        return images
+    out = images.clone()
+    for i in range(b):
+        d = dicts[i] if i < len(dicts) else dicts[-1]
+        payload = _akxz_json.dumps(d, ensure_ascii=False).encode("utf-8")
+        header = _akxz_struct.pack(">4sI", _AKXZ_MAGIC, len(payload))
+        blob = header + payload
+        pad = (-len(blob)) % 3
+        if pad:
+            blob += b"\x00" * pad
+        pix = (len(blob) + 2) // 3
+        if w < pix:
+            raise ValueError(f"Image too narrow to embed AKXZ payload: need {pix} px, have {w}.")
+        triplets = _akxz_bytes_to_float01(blob).view(-1, 3)
+        out[i, 0, :pix, :3] = triplets
+    return out
+
+def akxz_extract_dicts_from_tensor(images: _akxz_torch.Tensor):
+    """
+    images: [B,H,W,3] float32 0..1
+    Returns list[dict|None] length B, each is the embedded JSON object (decoded 1:1).
+    """
+    if not isinstance(images, _akxz_torch.Tensor) or images.ndim != 4 or images.shape[-1] < 3:
+        return []
+    b = int(images.shape[0])
+    out = []
+    for i in range(b):
+        row = images[i, 0, :, :3].reshape(-1)
+        raw = _akxz_float01_to_bytes(row)
+        if len(raw) < _AKXZ_HEADER_LEN or raw[:4] != _AKXZ_MAGIC:
+            out.append(None)
+            continue
+        size = int.from_bytes(raw[4:8], "big")
+        if size <= 0 or (8 + size) > len(raw):
+            out.append(None)
+            continue
+        payload = raw[8:8+size]
+        try:
+            obj = _akxz_json.loads(payload.decode("utf-8"))
+            out.append(obj if isinstance(obj, dict) else None)
+        except Exception:
+            out.append(None)
+    return out
+
+
 import json
 import os
 from typing import Any, Dict, List, Tuple, Union
@@ -356,7 +427,14 @@ class AKXZAxisPlot:
 
         batch = len(tensors)
         if batch == 1:
-            return (tensors[0].unsqueeze(0), cfg_src)
+            out1 = tensors[0].unsqueeze(0)
+            # embed cfg.image[0] as-is when present
+            try:
+                if len(_parse_xz_config(cfg_src)) > 0:
+                    out1 = akxz_embed_dicts_into_tensor(out1, [_parse_xz_config(cfg_src)[0]])
+            except Exception:
+                pass
+            return (out1, cfg_src)
         first_pil = _image_tensor_to_pil(tensors[0])
         w, h = first_pil.size
 
@@ -397,11 +475,23 @@ class AKXZAxisPlot:
                 output_plot.paste(pimg, (x_off, 0))
 
             out_t = _pil_to_image_tensor(output_plot).unsqueeze(0)
+            # embed full list under the same top-level key to allow 1:1 JSON reconstruction
+            try:
+                if isinstance(cfg_list, list) and len(cfg_list) > 0:
+                    out_t = akxz_embed_dicts_into_tensor(out_t, [{"image": cfg_list}])
+            except Exception:
+                pass
             return (out_t, cfg_src)
 
         out_batch = torch.stack([
             _pil_to_image_tensor(pimg) for i, pimg in enumerate(processed_pils)
         ], dim=0)
+        # embed each cfg.image[i] dict as-is (no renaming)
+        try:
+            if isinstance(cfg_list, list) and len(cfg_list) > 0:
+                out_batch = akxz_embed_dicts_into_tensor(out_batch, cfg_list)
+        except Exception:
+            pass
         return (out_batch, cfg_src)
 
 

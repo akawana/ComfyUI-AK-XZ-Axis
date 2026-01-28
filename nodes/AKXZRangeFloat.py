@@ -50,7 +50,7 @@ class AKXZRangeFloat:
                 "type": (["Cfg", "Denoise"], {"default": "Cfg"}),
                 "start": ("FLOAT", {"default": 0.0, "min": 0.0, "step": 0.05}),
                 "end": ("FLOAT", {"default": 0.05, "min": 0.05, "step": 0.05}),
-                "steps": ("INT", {"default": 1, "min": 1, "step": 1}),
+                "xz_steps": ("INT", {"default": 1, "min": 1, "step": 1}),
             },
             "optional": {
                 "xz_config": ("STRING", {"forceInput": True}),
@@ -69,7 +69,7 @@ class AKXZRangeFloat:
         type: str,
         start: float,
         end: float,
-        steps: int,
+        xz_steps: int,
         xz_config: Any = None,
     ) -> Tuple[List[float], str]:
         cfg = _coerce_json(xz_config)
@@ -88,7 +88,7 @@ class AKXZRangeFloat:
             desired = len(images_list) if images_list is not None else 0
             N = desired if desired > 0 else 1
         else:
-            s = int(steps)
+            s = int(xz_steps)
             N = max(1, s)
 
         outputRange: List[float] = []
