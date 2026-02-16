@@ -83,27 +83,27 @@ class AKXZBatchPrompts:
     OUTPUT_IS_LIST = (True, True, False)
 
     def run(self, clip, pos_0=None, neg_0=None, xz_config=None, **kwargs):
-pairs_pos: List[str] = []
-pairs_neg: List[str] = []
+        pairs_pos: List[str] = []
+        pairs_neg: List[str] = []
 
-def add_pair(p: Any, n: Any, p_connected: bool, n_connected: bool):
-    # A pair is considered present only when BOTH inputs are connected.
-    # Connected inputs may still legitimately provide empty strings.
-    if not p_connected or not n_connected:
+        def add_pair(p: Any, n: Any, p_connected: bool, n_connected: bool):
+            # A pair is considered present only when BOTH inputs are connected.
+            # Connected inputs may still legitimately provide empty strings.
+            if not p_connected or not n_connected:
         return
-    if p is None:
+            if p is None:
         p = ""
-    if n is None:
+            if n is None:
         n = ""
-    pairs_pos.append(str(p))
-    pairs_neg.append(str(n))
+            pairs_pos.append(str(p))
+            pairs_neg.append(str(n))
 
-# pos_0 / neg_0 are required inputs (forceInput), so treat them as connected.
-add_pair(pos_0, neg_0, True, True)
-for i in range(1, 11):
-    pk = f"pos_{i}"
-    nk = f"neg_{i}"
-    add_pair(kwargs.get(pk, None), kwargs.get(nk, None), pk in kwargs, nk in kwargs)
+        # pos_0 / neg_0 are required inputs (forceInput), so treat them as connected.
+        add_pair(pos_0, neg_0, True, True)
+        for i in range(1, 11):
+            pk = f"pos_{i}"
+            nk = f"neg_{i}"
+            add_pair(kwargs.get(pk, None), kwargs.get(nk, None), pk in kwargs, nk in kwargs)
 
         real_steps = len(pairs_pos)
 
