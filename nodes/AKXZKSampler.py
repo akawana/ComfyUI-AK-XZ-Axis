@@ -1,6 +1,7 @@
 # AKXZKSampler.py
 # A KSampler-like node that can accept either single values or lists on all main inputs.
-# It normalizes all inputs to lists of the same length by padding with the last element.
+# It normalizes all main inputs to lists of the same length by padding with the last element.
+# Note: when INPUT_IS_LIST=True, widget values may arrive wrapped in a list of length 1.
 
 import nodes
 import comfy.samplers
@@ -18,11 +19,17 @@ def _pad_to_length(lst, length):
     if len(lst) == 0:
         raise ValueError("AKXZKSampler: cannot pad an empty list.")
     if len(lst) > length:
-        # This should not happen when 'length' is computed as the max length,
-        # but keep it safe and explicit.
         return lst[:length]
     last = lst[-1]
     return lst + [last] * (length - len(lst))
+
+
+def _scalar(x):
+    if isinstance(x, (list, tuple)):
+        if len(x) == 0:
+            return None
+        return x[0]
+    return x
 
 
 class AKXZKSampler:
@@ -48,9 +55,7 @@ class AKXZKSampler:
     FUNCTION = "sample"
     CATEGORY = "AK"
 
-    # Allow inputs to be lists. ComfyUI may still pass singletons; we normalize anyway.
     INPUT_IS_LIST = True
-    # Return a list of latents so downstream nodes can map over them.
     OUTPUT_IS_LIST = (True,)
 
     def sample(
@@ -76,17 +81,23 @@ class AKXZKSampler:
         if iterations <= 1:
             iterations = 1
 
-        # Normalize all inputs to lists of the same length by padding with the last element.
+        # Normalize all main inputs to lists of the same length by padding with the last element.
         models = _pad_to_length(models, iterations)
         pos = _pad_to_length(pos, iterations)
         neg = _pad_to_length(neg, iterations)
         latents = _pad_to_length(latents, iterations)
 
+        # Normalize widget values (they may come wrapped in a list due to INPUT_IS_LIST).
+        base_seed = int(_scalar(seed) or 0)
+        steps_v = int(_scalar(steps) or 1)
+        cfg_v = float(_scalar(cfg) or 0.0)
+        sampler_name_v = _scalar(sampler_name)
+        scheduler_v = _scalar(scheduler)
+        denoise_v = float(_scalar(denoise) or 0.0)
+
         ks = nodes.KSampler()
 
         out_latents = []
-        base_seed = int(seed)
-
         for i in range(iterations):
             m = models[i]
             p = pos[i]
@@ -102,11 +113,11 @@ class AKXZKSampler:
                 n,
                 l,
                 item_seed,
-                int(steps),
-                float(cfg),
-                sampler_name,
-                scheduler,
-                float(denoise),
+                steps_v,
+                cfg_v,
+                sampler_name_v,
+                scheduler_v,
+                denoise_v,
             )
 
             out_latents.append(sampled_latent)
