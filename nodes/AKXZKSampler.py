@@ -107,16 +107,18 @@ class AKXZKSampler:
             # Use seed offset per item to avoid identical outputs when sampling multiple items.
             item_seed = (base_seed + i) & 0xFFFFFFFF
 
+            # nodes.KSampler.sample signature:
+            # (model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise)
             (sampled_latent,) = ks.sample(
                 m,
-                p,
-                n,
-                l,
                 item_seed,
                 steps_v,
                 cfg_v,
                 sampler_name_v,
                 scheduler_v,
+                p,
+                n,
+                l,
                 denoise_v,
             )
 
