@@ -86,24 +86,16 @@ class AKXZBatchPrompts:
         pairs_pos: List[str] = []
         pairs_neg: List[str] = []
 
-        def add_pair(p: Any, n: Any, p_connected: bool, n_connected: bool):
-            # A pair is considered present only when BOTH inputs are connected.
-            # Connected inputs may still legitimately provide empty strings.
-            if not p_connected or not n_connected:
-        return
-            if p is None:
-        p = ""
-            if n is None:
-        n = ""
-            pairs_pos.append(str(p))
-            pairs_neg.append(str(n))
+        def add_pair(p: Any, n: Any):
+            # treat empty string as valid input; skip only when input is truly missing
+            if p is None or n is None:
+                return
+            pairs_pos.append(p if p == "" else str(p))
+            pairs_neg.append(n if n == "" else str(n))
 
-        # pos_0 / neg_0 are required inputs (forceInput), so treat them as connected.
-        add_pair(pos_0, neg_0, True, True)
+        add_pair(pos_0, neg_0)
         for i in range(1, 11):
-            pk = f"pos_{i}"
-            nk = f"neg_{i}"
-            add_pair(kwargs.get(pk, None), kwargs.get(nk, None), pk in kwargs, nk in kwargs)
+            add_pair(kwargs.get(f"pos_{i}", None), kwargs.get(f"neg_{i}", None))
 
         real_steps = len(pairs_pos)
 
