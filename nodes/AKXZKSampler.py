@@ -3,6 +3,7 @@
 # It normalizes all inputs to lists of the same length by padding with the last element.
 
 import nodes
+import comfy.samplers
 
 
 def _as_list(x):
@@ -36,8 +37,8 @@ class AKXZKSampler:
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFF}),
                 "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                 "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step": 0.1}),
-                "sampler_name": (nodes.KSampler.SAMPLERS,),
-                "scheduler": (nodes.KSampler.SCHEDULERS,),
+                "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
+                "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
                 "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
             }
         }
@@ -45,7 +46,7 @@ class AKXZKSampler:
     RETURN_TYPES = ("LATENT",)
     RETURN_NAMES = ("latent",)
     FUNCTION = "sample"
-    CATEGORY = "AK/XZ Axis"
+    CATEGORY = "AK"
 
     # Allow inputs to be lists. ComfyUI may still pass singletons; we normalize anyway.
     INPUT_IS_LIST = True
@@ -72,8 +73,6 @@ class AKXZKSampler:
 
         # Determine iterations as the maximum input length.
         iterations = max(len(models), len(pos), len(neg), len(latents))
-
-        # If everything is a single item, just do one render.
         if iterations <= 1:
             iterations = 1
 
@@ -83,7 +82,6 @@ class AKXZKSampler:
         neg = _pad_to_length(neg, iterations)
         latents = _pad_to_length(latents, iterations)
 
-        # KSampler node implementation
         ks = nodes.KSampler()
 
         out_latents = []
@@ -95,10 +93,9 @@ class AKXZKSampler:
             n = neg[i]
             l = latents[i]
 
-            # Use seed offset per item to avoid identical outputs when sampling multiple items
+            # Use seed offset per item to avoid identical outputs when sampling multiple items.
             item_seed = (base_seed + i) & 0xFFFFFFFF
 
-            # nodes.KSampler.sample returns (latent,)
             (sampled_latent,) = ks.sample(
                 m,
                 p,
