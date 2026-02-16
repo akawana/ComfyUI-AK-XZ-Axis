@@ -87,11 +87,11 @@ class AKXZBatchPrompts:
         pairs_neg: List[str] = []
 
         def add_pair(p: Any, n: Any):
-            # treat empty string as valid input; skip only when input is truly missing
-            if p is None or n is None:
+            # Empty string is a valid connected value. Skip a step only if BOTH are truly missing (None).
+            if p is None and n is None:
                 return
-            pairs_pos.append(p if p == "" else str(p))
-            pairs_neg.append(n if n == "" else str(n))
+            pairs_pos.append(str(p) if p is not None else "")
+            pairs_neg.append(str(n) if n is not None else "")
 
         add_pair(pos_0, neg_0)
         for i in range(1, 11):
